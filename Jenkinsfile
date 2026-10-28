@@ -22,18 +22,21 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                 echo 'Checkout'
                 checkout scm
             }
         }
 
         stage('Build and Test') {
             steps {
+                 echo 'Build and Test...'
                 sh 'mvn -B clean verify'
             }
         }
 
         stage('Package') {
             steps {
+                 echo 'Package...'
                 sh 'mvn -B -DskipTests package'
             }
         }
@@ -47,6 +50,7 @@ pipeline {
 
         success {
             script {
+                 echo 'Success...'
                 if (env.CHANGE_ID) {
                     echo "PR #${env.CHANGE_ID} passed for ${env.CHANGE_BRANCH} -> ${env.CHANGE_TARGET}"
                 }
