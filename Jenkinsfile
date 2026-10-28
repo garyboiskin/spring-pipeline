@@ -1,5 +1,9 @@
 pipeline {
     agent any
+        tools {
+            // This must match the name configured in 'Global Tool Configuration'
+            maven 'Maven 3.10'
+        }
 
     options {
         disableConcurrentBuilds()
