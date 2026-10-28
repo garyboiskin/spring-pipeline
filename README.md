@@ -35,3 +35,25 @@ curl -X DELETE http://localhost:8080/api/requests
 
 mvn test
 ```
+
+## Jenkins PR pipeline (local Jenkins)
+
+This repository includes a `Jenkinsfile` at the project root. To run pull
+request builds from a local Jenkins service (`brew services start jenkins-lts`):
+
+1. In Jenkins, install plugins: `Pipeline`, `GitHub Branch Source`, and `Git`.
+2. Add GitHub credentials (a Personal Access Token with repo read access).
+3. Create a **Multibranch Pipeline** job.
+4. In Branch Sources, add GitHub repository:
+   `https://github.com/garyboiskin/spring-pipeline`.
+5. Configure pull request discovery strategy (for example, merge PR with target
+   branch before build).
+6. Set Scan Multibranch Pipeline Triggers to periodically scan (for example,
+   every 5 minutes) if webhook delivery to local Jenkins is not available.
+
+Pipeline behavior:
+
+- runs `mvn -B clean verify` on each branch/PR build,
+- archives JAR artifacts from `target/*.jar`,
+- publishes JUnit reports from `target/surefire-reports/*.xml`.
+
