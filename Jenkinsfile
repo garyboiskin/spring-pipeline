@@ -40,6 +40,23 @@ pipeline {
                 sh 'mvn -B -DskipTests package'
             }
         }
+
+        stage('Deploy') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
+            steps {
+                echo 'Deploy...'
+                sh '''
+                    docker build -t spring-pipeline:latest .
+                    docker rm -f spring-pipeline || true
+                    docker run -d --name spring-pipeline -p 8088:8080 spring-pipeline:latest
+                '''
+            }
+        }
     }
 
     post {
