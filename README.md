@@ -8,13 +8,18 @@ Run the application with Java 17 and Maven:
 
 #Test dev branch
 
-
 ```sh
 mvn spring-boot:run
 ```
 
-For example:
+Run with Docker:
 
+```sh
+docker build -t spring-pipeline .
+docker run --rm -p 8088:8080 spring-pipeline
+```
+
+For example
 ```sh
 curl http://localhost:8080/api/requests
 curl -X POST http://localhost:8080/api/requests \
