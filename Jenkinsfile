@@ -50,11 +50,13 @@ pipeline {
             }
             steps {
                 echo 'Deploy...'
+                 withEnv(['PATH+EXTRA=/usr/local/bin:/usr/bin']) {
                 sh '''
                     docker build -t spring-pipeline:latest .
                     docker rm -f spring-pipeline || true
                     docker run -d --name spring-pipeline -p 8088:8080 spring-pipeline:latest
                 '''
+                }
             }
         }
     }
