@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-pipeline
+  labels:
+    app: spring-pipeline
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spring-pipeline
+  template:
+    metadata:
+      labels:
+        app: spring-pipeline
+    spec:
+      containers:
+        - name: spring-pipeline
+          image: spring-pipeline:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+

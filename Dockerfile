@@ -10,6 +10,6 @@ WORKDIR /app
 
 COPY --from=build /workspace/target/spring-pipeline-0.0.1-SNAPSHOT.jar /app/app.jar
 
-EXPOSE 8088
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
