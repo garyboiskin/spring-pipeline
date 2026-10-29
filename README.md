@@ -68,9 +68,6 @@ request builds from a local Jenkins service (`brew services start jenkins-lts`):
    every 5 minutes) if webhook delivery to local Jenkins is not available.
 
 Pipeline behavior:
-
-
-
 - runs `mvn -B clean verify` on each branch/PR build,
 - archives JAR artifacts from `target/*.jar`,
 - publishes JUnit reports from `target/surefire-reports/*.xml`.
