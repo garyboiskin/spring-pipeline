@@ -50,12 +50,16 @@ pipeline {
             }
             steps {
                 echo 'Deploy...'
-                 withEnv(['PATH+EXTRA=/usr/local/bin:/usr/bin']) {
-                sh '''
-                    docker build -t spring-pipeline:latest .
-                    docker rm -f spring-pipeline || true
-                    docker run -d --name spring-pipeline -p 8088:8080 spring-pipeline:latest
-                '''
+                withEnv([
+                    'PATH+EXTRA=/usr/local/bin:/usr/bin',
+                    "KUBECONFIG=${env.HOME}/.kube/config"
+                ]) {
+                    sh '''
+                        docker build -t spring-pipeline:latest .
+                        kubectl apply -f k8s/
+                        kubectl rollout restart deployment/spring-pipeline
+                        kubectl rollout status deployment/spring-pipeline --timeout=120s
+                    '''
                 }
             }
         }

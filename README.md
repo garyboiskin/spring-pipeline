@@ -36,6 +36,22 @@ curl -X DELETE http://localhost:8080/api/requests
 mvn test
 ```
 
+## Kubernetes
+
+Manifests are in `k8s/` (Deployment with 2 replicas and a NodePort Service on
+port 30080). The app listens on port 8080 inside the container.
+
+```sh
+docker build -t spring-pipeline:latest .
+kubectl apply -f k8s/
+kubectl get pods -l app=spring-pipeline
+kubectl port-forward svc/spring-pipeline 30080:8080
+curl http://localhost:30080/api/requests
+```
+
+With minikube, run `minikube image load spring-pipeline:latest` first and use
+`minikube service spring-pipeline --url` to get the URL.
+
 ## Jenkins PR pipeline (local Jenkins)
 
 This repository includes a `Jenkinsfile` at the project root. To run pull
