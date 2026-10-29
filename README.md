@@ -69,6 +69,8 @@ request builds from a local Jenkins service (`brew services start jenkins-lts`):
 
 Pipeline behavior:
 
+
+
 - runs `mvn -B clean verify` on each branch/PR build,
 - archives JAR artifacts from `target/*.jar`,
 - publishes JUnit reports from `target/surefire-reports/*.xml`.
