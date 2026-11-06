@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: spring-pipeline
-          image: spring-pipeline:latest
-          imagePullPolicy: IfNotPresent
+          image: 839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           readinessProbe:

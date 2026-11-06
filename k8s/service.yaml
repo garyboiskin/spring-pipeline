@@ -4,13 +4,17 @@ metadata:
   name: spring-pipeline
   labels:
     app: spring-pipeline
+  #annotations:
+    # EKS Auto Mode creates an internal NLB by default; make it public.
+   # service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+   # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
-  type: NodePort
+  type: LoadBalancer
+  #loadBalancerClass: eks.amazonaws.com/nlb
   selector:
     app: spring-pipeline
   ports:
     - name: http
-      port: 8080
+      port: 80
       targetPort: 8080
-      nodePort: 30080
 

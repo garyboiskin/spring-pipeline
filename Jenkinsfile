@@ -16,7 +16,12 @@ pipeline {
     }
 
     environment {
-        MAVEN_OPTS = '-Dmaven.repo.local=.m2/repository'
+        MAVEN_OPTS     = '-Dmaven.repo.local=.m2/repository'
+        AWS_REGION     = 'us-east-2'
+        AWS_ACCOUNT_ID = '839670623406'
+        CLUSTER_NAME   = 'spring-boot-cluster'
+        ECR_REPO       = 'spring-pipeline'
+        IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${BUILD_NUMBER}"
     }
 
     stages {
@@ -50,16 +55,23 @@ pipeline {
             }
             steps {
                 echo 'Deploy...'
-                withEnv([
-                    'PATH+EXTRA=/usr/local/bin:/usr/bin',
-                    "KUBECONFIG=${env.HOME}/.kube/config"
-                ]) {
-                    sh '''
-                        docker build -t spring-pipeline:latest .
-                        kubectl apply -f k8s/
-                        kubectl rollout restart deployment/spring-pipeline
-                        kubectl rollout status deployment/spring-pipeline --timeout=120s
-                    '''
+                withEnv(['PATH+EXTRA=/usr/local/bin:/usr/bin:/opt/homebrew/bin']) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                      credentialsId: 'aws-creds']]) {
+                        sh '''
+                            aws ecr describe-repositories --repository-names $ECR_REPO --region $AWS_REGION \
+                              || aws ecr create-repository --repository-name $ECR_REPO --region $AWS_REGION
+                            aws ecr get-login-password --region $AWS_REGION | \
+                              docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                            docker build -t $IMAGE .
+                            docker push $IMAGE
+
+                            aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+                            kubectl apply -f k8s/
+                            kubectl set image deployment/spring-pipeline spring-pipeline=$IMAGE
+                            kubectl rollout status deployment/spring-pipeline --timeout=180s
+                        '''
+                    }
                 }
             }
         }
