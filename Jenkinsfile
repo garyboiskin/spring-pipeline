@@ -11,6 +11,7 @@ pipeline {
     }
 
     // Polling is useful for local Jenkins when GitHub webhooks are not reachable.
+
     triggers {
         pollSCM('H/5 * * * *')
     }
