@@ -20,7 +20,7 @@ pipeline {
         AWS_REGION     = 'us-east-2'
         AWS_ACCOUNT_ID = '839670623406'
         CLUSTER_NAME   = 'spring-boot-cluster'
-        ECR_REPO       = 'spring-pipeline'
+        ECR_REPO       = 'springboot-eks'
         IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${BUILD_NUMBER}"
     }
 
