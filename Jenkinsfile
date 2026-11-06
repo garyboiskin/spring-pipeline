@@ -69,7 +69,7 @@ pipeline {
                             aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
                             kubectl apply -f k8s/
                             kubectl set image deployment/spring-pipeline spring-pipeline=$IMAGE
-                            kubectl rollout status deployment/spring-pipeline --timeout=180s
+                            kubectl rollout status deployment/spring-pipeline --timeout=380s
                         '''
                     }
                 }
