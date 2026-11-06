@@ -72,3 +72,179 @@ Pipeline behavior:
 - archives JAR artifacts from `target/*.jar`,
 - publishes JUnit reports from `target/surefire-reports/*.xml`.
 
+AWS ECR  image  URI for the app
+839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:latest
+AWS ECR  image tag   URI for the app latest
+839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks@sha256:b1013bc4ee920427e7c3e04f03c499eb8bf3d2ad9069ec022d55483202678139
+AWS ECR  image tag   URI for the app with size 0
+839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks@sha256:2745aac1f2de5467d80a654191df88658054126a60d63167067ca4d2e735cd85
+
+eksctl create cluster \
+--name=spring-boot-cluster \
+--region=us-east-2 \
+--version=1.28 \
+--node-type=t2.small \
+
+eksctl create cluster --name spring-boot-cluster --region us-east-2 --version 1.28 --node-type=t2.small
+
+eksctl create cluster --name spring-boot-cluster --region us-east-2 --node-type t3.medium --nodes 2
+
+eksctl create cluster --name spring-boot-cluster --region us-east-2 --node-type m7i-flex.large --nodes 2  --managed
+
+# eksctl create cluster --name spring-boot-cluster --region us-east-2 --node-type 
+m7i-flex.large
+8 GiB
+2
+
+eksctl create cluster --name spring-boot-cluster --region us-east-2 --node-type m7i-flex.large --nodes 2
+
+
+connect local k8 to cluster
+aws eks update-kubeconfig --name spring-boot-cluster --region us-east-2 
+
+
+aws iam put-user-policy --user-name GaryIAM --policy-name EksFullAccess --policy-document '{
+"Version": "2012-10-17",
+"Statement": [
+{ "Effect": "Allow", "Action": "eks:*", "Resource": "*" }
+]
+}'
+
+
+garyboriskin@Garys-MacBook-Air spring-pipeline % aws sts get-caller-identity
+{
+"UserId": "AIDA4HACE5SXEFBYAEOCU",
+"Account": "839670623406",
+"Arn": "arn:aws:iam::839670623406:user/GaryIAM"
+}
+
+
+PRINCIPAL=arn:aws:iam::839670623406:user/GaryIAM   # replace with your console ARN
+
+aws eks create-access-entry --cluster-name spring-boot-cluster --region us-east-2  --principal-arn "arn:aws:iam::839670623406:user/GaryIAM"
+
+aws eks associate-access-policy --cluster-name spring-boot-cluster --region us-east-2 \
+--principal-arn "$PRINCIPAL" \
+--policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+--access-scope type=cluster
+
+command to apply the deployment and service manifests to the cluster
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl get svc
+kubectl get pods
+
+ImagePullBackOff with "no match for platform in manifest" (image built on Apple Silicon
+is arm64, EKS nodes are amd64). Build and push for linux/amd64, then restart the pods:
+docker buildx build --platform linux/amd64 -t 839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:latest --push .
+kubectl rollout restart deployment/spring-pipeline
+
+external ip
+k8s-default-springpi-7fd6388d3a-1be25d346e6b7dee.elb.us-east-2.amazonaws.com
+
+839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks
+
+List the images in the repository:
+aws ecr list-images --repository-name springboot-eks --region us-east-2
+
+A more readable table with tags, push date, size and digest:
+
+aws ecr describe-images --repository-name springboot-eks --region us-east-2 \
+--query 'sort_by(imageDetails,&imagePushedAt)[].{Tags:imageTags,Pushed:imagePushedAt,SizeMB:imageSizeInBytes,Digest:imageDigest}' \
+--output table
+
+# Only tag names
+aws ecr list-images --repository-name springboot-eks --region us-east-2
+
+# Check which architecture an image is (arm64 vs amd64)
+docker buildx imagetools inspect 839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:latest
+
+# Show the most recently pushed image
+aws ecr describe-images --repository-name springboot-eks --region us-east-2 \
+--query 'sort_by(imageDetails,&imagePushedAt)[-1]'
+
+Delete all images (keeps the empty repository):
+
+aws ecr batch-delete-image --repository-name springboot-eks --region us-east-2 \
+--image-ids "$(aws ecr list-images --repository-name springboot-eks --region us-east-2 --query 'imageIds[*]' --output json)"
+
+Two steps per stack: turn off termination protection, then delete. Delete the node group stack first, because the cluster stack's resources are in use until it's gone.
+
+# 1. Node group stack
+aws cloudformation update-termination-protection --no-enable-termination-protection \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-nodegroup-ng-32c8a0c2
+aws cloudformation delete-stack \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-nodegroup-ng-32c8a0c2
+aws cloudformation wait stack-delete-complete \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-nodegroup-ng-32c8a0c2
+
+# 2. Cluster stack
+aws cloudformation update-termination-protection --no-enable-termination-protection \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-cluster
+aws cloudformation delete-stack \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-cluster
+aws cloudformation wait stack-delete-complete \
+--region us-east-2 --stack-name eksctl-spring-boot-cluster-cluster
+
+Check the result:
+aws cloudformation list-stacks --region us-east-2 \
+--stack-status-filter CREATE_COMPLETE ROLLBACK_COMPLETE DELETE_FAILED \
+--query 'StackSummaries[?contains(StackName,`spring-boot-cluster`)].[StackName,StackStatus]' --output text
+
+
+An empty result means both are deleted.
+
+Console alternative: go to CloudFormation → Stacks → select the stack → Stack actions → Edit termination protection → Deactivated → Save. Then choose Delete.
+
+curl http://a6746f810013843c0b78964fe860f43b-1703028323.us-east-2.elb.amazonaws.com/api/requests
+
+The address is the hostname of the load balancer that Kubernetes created for your Service. It shows up in the EXTERNAL-IP column:
+
+To build the full URL in one step:
+
+echo "http://$(kubectl get svc spring-pipeline -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')/api/requests"
+
+environment {
+MAVEN_OPTS     = '-Dmaven.repo.local=.m2/repository'
+AWS_REGION     = 'us-east-1'                 // your region
+AWS_ACCOUNT_ID = '123456789012'              // your account
+CLUSTER_NAME   = 'spring-boot-cluster'
+ECR_REPO       = 'spring-pipeline'
+IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${BUILD_NUMBER}"
+}
+...
+stage('Deploy') {
+when { anyOf { branch 'main'; branch 'master' } }
+steps {
+withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+credentialsId: 'aws-creds']]) {
+sh '''
+aws ecr describe-repositories --repository-names $ECR_REPO --region $AWS_REGION \
+|| aws ecr create-repository --repository-name $ECR_REPO --region $AWS_REGION
+aws ecr get-login-password --region $AWS_REGION | \
+docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+docker build -t $IMAGE .
+docker push $IMAGE
+
+                aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+                kubectl apply -f k8s/
+                kubectl set image deployment/spring-pipeline spring-pipeline=$IMAGE
+                kubectl rollout status deployment/spring-pipeline --timeout=180s
+            '''
+        }
+    }
+}
+
+#find account id 
+garyboriskin@Garys-MacBook-Air spring-pipeline % aws sts get-caller-identity --query Account --output text
+839670623406
+
+environment {
+MAVEN_OPTS     = '-Dmaven.repo.local=.m2/repository'
+AWS_REGION     = 'us-east-1'                 // your region
+AWS_ACCOUNT_ID = '839670623406'              // your account
+CLUSTER_NAME   = 'spring-boot-cluster'
+ECR_REPO       = 'spring-pipeline'
+IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${BUILD_NUMBER}"
+}
+
