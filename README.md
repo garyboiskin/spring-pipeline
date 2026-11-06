@@ -248,3 +248,5 @@ ECR_REPO       = 'spring-pipeline'
 IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${BUILD_NUMBER}"
 }
 
+Created  aws kiy and secret key for Jenkins credentials and added to Jenkinsfile.  Added AWS_REGION, AWS_ACCOUNT_ID, CLUSTER_NAME, ECR_REPO, IMAGE to Jenkinsfile. 
+Added withCredentials block to Deploy stage in Jenkinsfile.
