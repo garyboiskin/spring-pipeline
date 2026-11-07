@@ -289,3 +289,7 @@ mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Tests run:|jacoco|cove
 mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "^\[(INFO|ERROR|WARNING)\].*(Tests run:|Rule|BUILD|All coverage)"
 
 mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Rule|BUILD|coverage checks"; mvn -B -q verify 2>&1 | grep -E "BUILD|ERROR" | head -3; echo default-ok
+
+gh pr list --state all --limit 5 --json number,baseRefName,headRefOid,title; gh api repos/garyboiskin/spring-pipeline/branches --jq '.[].name'
+
+curl -s -m 10 http://localhost:8080/job/springboot-pipeline-to-github/job/dev/20/consoleText | grep -E "Coverage|coverage|BUILD|Rule|Finished|Stage|Tests run:" | tail -15; gh pr list --state all --limit 3 --json number,baseRefName,headRefName,headRefOid
