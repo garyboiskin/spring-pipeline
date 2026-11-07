@@ -40,6 +40,19 @@ pipeline {
             }
         }
 
+        stage('Coverage Gate (85%)') {
+            when {
+                anyOf {
+                    branch 'dev'
+                    changeRequest target: 'dev'
+                }
+            }
+            steps {
+                echo 'Enforcing 85% line coverage...'
+                sh 'mvn -B verify -Dcoverage.check.skip=false -Dcoverage.minimum=0.85'
+            }
+        }
+
         stage('Package') {
             steps {
                  echo 'Package...'

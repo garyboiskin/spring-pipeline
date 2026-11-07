@@ -250,3 +250,42 @@ IMAGE          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_RE
 
 Created  aws kiy and secret key for Jenkins credentials and added to Jenkinsfile.  Added AWS_REGION, AWS_ACCOUNT_ID, CLUSTER_NAME, ECR_REPO, IMAGE to Jenkinsfile. 
 Added withCredentials block to Deploy stage in Jenkinsfile.
+aryboriskin@Garys-MacBook-Air spring-pipeline % kubectl describe pod spring-pipeline-f94457bd-dkfsm  | tail -20   
+Volumes:  
+kube-api-access-f4cjn:  
+Type:                    Projected (a volume that contains injected data from multiple sources)  
+TokenExpirationSeconds:  3607  
+ConfigMapName:           kube-root-ca.crt  
+Optional:                false  
+DownwardAPI:             true  
+QoS Class:                   Burstable  
+Node-Selectors:              <none>  
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s  
+node.kubernetes.io/unreachable:NoExecute op=Exists for 300s  
+Events:  
+Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------  
+Normal   Scheduled  96s                default-scheduler  Successfully assigned default/spring-pipeline-f94457bd-dkfsm to ip-192-168-51-105.us-east-2.compute.internal  
+Normal   BackOff    15s (x5 over 95s)  kubelet            Back-off pulling image "839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:18"  
+Warning  Failed     15s (x5 over 95s)  kubelet            Error: ImagePullBackOff  
+Normal   Pulling    4s (x4 over 95s)   kubelet            Pulling image "839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:18"  
+Warning  Failed     4s (x4 over 95s)   kubelet            Failed to pull image "839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:18": rpc error: code = NotFound desc = failed to pull and unpack image "839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:18": no match for platform in manifest: not found  
+Warning  Failed     4s (x4 over 95s)   kubelet            Error: ErrImagePull  
+
+The pull itself works now. The new error, no match for platform in manifest, means the image architecture doesn't match the nodes. Jenkins is running on your Apple Silicon Mac, so it builds an arm64 image, but the EKS nodes are amd64. I'll build for linux/amd64.
+
+Your Service is type: LoadBalancer, so AWS gives it a DNS name.
+kubectl
+kubectl get svc spring-pipeline
+he EXTERNAL-IP column shows a hostname like xxxx.elb.us-east-2.amazonaws.com. If it says <pending>, wait a minute or two and run it again.
+Print just the hostname:
+kubectl get svc spring-pipeline -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+
+mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "^\[(INFO|ERROR|WARNING)\].*(Tests run:|coverage|Coverage|BUILD|covered ratio|Rule)" | head; java -version 2>&1 | head -1
+
+
+mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Tests run:|jacoco|coverage|BUILD|ERROR" | head -15
+
+mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "^\[(INFO|ERROR|WARNING)\].*(Tests run:|Rule|BUILD|All coverage)"
+
+mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Rule|BUILD|coverage checks"; mvn -B -q verify 2>&1 | grep -E "BUILD|ERROR" | head -3; echo default-ok
