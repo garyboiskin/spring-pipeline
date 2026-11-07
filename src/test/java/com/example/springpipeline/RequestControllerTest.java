@@ -36,7 +36,8 @@ class RequestControllerTest {
                         .content("{\"name\":\"sample\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.method", is("POST")))
-                .andExpect(jsonPath("$.body.name", is("sample")));
+               .andExpect(jsonPath("$.body.name", is("sample")));
+               // .andExpect(jsonPath("$.body", is("sample")));
     }
 
     @Test
