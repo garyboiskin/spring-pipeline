@@ -49,7 +49,7 @@ pipeline {
             }
             steps {
                 echo 'Enforcing 85% line coverage...'
-                sh 'mvn -B verify -Dcoverage.check.skip=false -Dcoverage.minimum=0.85'
+                sh 'mvn -B verify -Dcoverage.check.skip=false -Dcoverage.minimum=0.99'
             }
         }
 
