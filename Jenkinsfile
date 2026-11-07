@@ -64,8 +64,7 @@ pipeline {
                               || aws ecr create-repository --repository-name $ECR_REPO --region $AWS_REGION
                             aws ecr get-login-password --region $AWS_REGION | \
                               docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                            docker build -t $IMAGE .
-                            docker push $IMAGE
+                            docker buildx build --platform linux/amd64 -t $IMAGE --push .
 
                             aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
                             kubectl apply -f k8s/
