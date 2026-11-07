@@ -296,4 +296,5 @@ curl -s -m 10 http://localhost:8080/job/springboot-pipeline-to-github/job/dev/20
 
 mvn -B verify -Dcoverage.check.skip=false
 
+
 mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Rule|BUILD|coverage checks"
