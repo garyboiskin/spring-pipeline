@@ -5,9 +5,9 @@ metadata:
   labels:
     app: spring-pipeline
   #annotations:
-    # EKS Auto Mode creates an internal NLB by default; make it public.
-   # service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-   # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+     # EKS Auto Mode creates an internal NLB by default; make it public.
+     # service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+     # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
   type: LoadBalancer
   #loadBalancerClass: eks.amazonaws.com/nlb
