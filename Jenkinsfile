@@ -17,6 +17,7 @@ pipeline {
     }
 
     environment {
+        SPRING_PROFILES_ACTIVE = 'test'
         MAVEN_OPTS     = '-Dmaven.repo.local=.m2/repository'
         AWS_REGION     = 'us-east-2'
         AWS_ACCOUNT_ID = '839670623406'
