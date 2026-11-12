@@ -479,3 +479,17 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 INSERT INTO customers (first_name, last_name, email) VALUES ('John', 'Doe', 'joedoe@gmail.com');
 INSERT INTO customers (first_name, last_name, email) VALUES ('Mary', 'Smith', 'marysmith@gmail.com');
+
+to find the db name
+
+aws rds describe-db-instances \
+--db-instance-identifier postgresdb \
+--region us-east-2 \
+--query "DBInstances[0].DBName" \
+--output text
+If it returns blank, then this RDS instance was created without a default DB name, or it uses the default postgres database.
+For your case, this is the one that worked from the pod:
+-d postgres
+So the DB name is usually:
+•
+postgres
