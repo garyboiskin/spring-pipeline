@@ -1,7 +1,10 @@
 package com.example.springpipeline.service;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import com.example.springpipeline.entities.Customer;
+import com.example.springpipeline.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,9 +14,17 @@ public class SpringPipelineService {
 
     private static final Logger log = LoggerFactory.getLogger(SpringPipelineService.class);
 
-    public Map<String, Object> get(Map<String, Object> body) {
-       log.info("Processing GET request payload={}", body);
-       return Map.of("body", body);
+    private final CustomerRepository customerRepository;
+
+    public SpringPipelineService(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
+
+    public Map<String, Object> getAll() {
+       log.info("Processing GET All");
+       Iterable<Customer> customers= customerRepository.findAll();
+       return Map.of("customers", customers);
+      // return body;
     }
 
     public Map<String, Object> post(Map<String, Object> body) {

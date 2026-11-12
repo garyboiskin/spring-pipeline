@@ -297,3 +297,185 @@ curl -s -m 10 http://localhost:8080/job/springboot-pipeline-to-github/job/dev/20
 mvn -B verify -Dcoverage.check.skip=false
 
 mvn -B verify -Dcoverage.check.skip=false 2>&1 | grep -E "Rule|BUILD|coverage checks"
+
+Use CloudWatch Logs (and optionally kubectl) to view EKS app logs.
+1.
+If using kubectl directly (fastest):
+kubectl logs -f deployment/spring-pipeline -n default
+For a specific pod:
+kubectl get pods -n default -l app=spring-pipeline
+kubectl logs -f <pod-name> -n default
+2.
+In AWS Console (CloudWatch):
+1.
+Open CloudWatch → Logs → Log groups.
+2.
+Find your EKS/container log group (often under /aws/containerinsights/<cluster-name>/... if Container Insights/Fluent Bit is enabled).
+3.
+Open a log stream for the spring-pipeline pod/container.
+
+
+
+Use Amazon RDS (PostgreSQL) and connect your app via JDBC.
+
+DB name: postgresDB
+username: postgres
+password: password
+1.
+Create DB (Console): RDS → Create database → PostgreSQL → choose credentials, DB name, same VPC as EKS, private access, and allow inbound 5432 from your EKS node/pod security group.
+2.
+Get endpoint: after creation, copy Endpoint and port.
+3.
+Store secrets in Kubernetes:
+kubectl create secret generic db-secret \
+--from-literal=SPRING_DATASOURCE_USERNAME='postgres' \
+--from-literal=SPRING_DATASOURCE_PASSWORD='password'
+4.
+Set Spring env vars in Deployment (k8s/deployment.yaml):
+env:
+- name: SPRING_DATASOURCE_URL
+value: jdbc:postgresql://<rds-endpoint>:5432/<db-name>
+- name: SPRING_DATASOURCE_USERNAME
+valueFrom:
+secretKeyRef:
+name: db-secret
+key: SPRING_DATASOURCE_USERNAME
+- name: SPRING_DATASOURCE_PASSWORD
+valueFrom:
+secretKeyRef:
+name: db-secret
+key: SPRING_DATASOURCE_PASSWORD
+5.
+Add dependencies/config (if not already):
+◦
+spring-boot-starter-data-jpa
+◦
+org.postgresql:postgresql
+◦
+optional in application.properties:
+▪
+spring.jpa.hibernate.ddl-auto=update
+▪
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+6.
+Apply and restart:
+kubectl apply -f k8s/
+kubectl rollout restart deployment/spring-pipeline
+kubectl logs -f deployment/spring-pipeline
+For production, prefer AWS Secrets Manager + External Secrets (instead of plain K8s secret literals) and keep RDS non-public.
+
+Connection steps
+Follow the steps below to paste the code of each step in your tool and run the commands. The snippets dynamically reflect the authentication configuration.
+Endpoint: postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com
+Port: 5432
+Database: postgresDB
+
+curl -o global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+
+export RDSHOST="postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com"
+psql "host=$RDSHOST port=5432 dbname=postgres user=postgres sslmode=verify-full sslrootcert=./global-bundle.pem"
+
+Use a direct PostgreSQL client check plus a TCP check.
+# 1) DNS + port reachability
+nslookup postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com
+nc -vz postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com 5432
+
+# 2) Real DB login test (requires psql installed)
+PGPASSWORD='password' psql \
+-h postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com \
+-p 5432 \
+-U postgres \
+-d postgresDB \
+-c "select current_database(), current_user, version();"
+If nc fails, it’s network/security group/routing.
+If nc succeeds but psql fails, it’s credentials/DB name/SSL/auth policy.
+For RDS SSL-required setups, use:
+PGPASSWORD='password' psql \
+"host=postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com port=5432 dbname=postgresDB user=postgres sslmode=require" \
+-c "select now();"
+
+Fork Chat
+GPT-5.3-Codex • 0.9 Credits
+
+
+what is :  curl -s https://checkip.amazonaws.com
+73.8.22.123  ?
+README.md:384-389
+That is your public IPv4 address as seen from Amazon’s checkip service.
+So:
+•
+73.8.22.123 is the internet IP your machine is using right now
+•
+it can be used in a firewall rule like:
+aws ec2 authorize-security-group-ingress \
+--group-id sg-0d2e0f73c9e802bd9 \
+--protocol tcp \
+--port 5432 \
+--cidr 73.8.22.123/32 \
+--region us-east-2
+
+1.
+Modify the RDS instance to be publicly accessible:
+aws rds modify-db-instance \
+--db-instance-identifier postgresdb \
+--publicly-accessible \
+--apply-immediately \
+--region us-east-2
+3.
+Add SG rule for your current public IP (tight scope, port 5432 only):
+MYIP=$(curl -s https://checkip.amazonaws.com)
+aws ec2 authorize-security-group-ingress \
+--group-id sg-0d2e0f73c9e802bd9 \
+--protocol tcp \
+--port 5432 \
+--cidr ${MYIP}/32 \
+--region us-east-2
+
+
+//create secret
+kubectl create secret generic db-secret \
+--from-literal=SPRING_DATASOURCE_USERNAME='postgres' \
+--from-literal=SPRING_DATASOURCE_PASSWORD='password'
+
+garyboriskin@Garys-MacBook-Air spring-pipeline % kubectl create secret generic db-secret \
+--from-literal=SPRING_DATASOURCE_USERNAME='postgres' \
+--from-literal=SPRING_DATASOURCE_PASSWORD='password'
+secret/db-secret created
+
+4.
+Set Spring env vars in Deployment (k8s/deployment.yaml):
+endpoint
+postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com
+env:
+- name: SPRING_DATASOURCE_URL
+value: jdbc:postgresql://postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com:5432/<db-name>
+- name: SPRING_DATASOURCE_USERNAME
+valueFrom:
+secretKeyRef:
+name: db-secret
+key: SPRING_DATASOURCE_USERNAME
+- name: SPRING_DATASOURCE_PASSWORD
+valueFrom:
+secretKeyRef:
+name: db-secret
+key: SPRING_DATASOURCE_PASSWORD
+  what is the command to see rds-endpoint?
+  Use the AWS CLI:
+  aws rds describe-db-instances \
+  --db-instance-identifier postgresdb \
+  --region us-east-2 \
+  --query "DBInstances[0].Endpoint.Address" \
+  --output text
+
+--connect to db
+psql --host=postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com --port=5432 --dbname=postgres --username=postgres
+--ctreate table
+CREATE TABLE customers (
+customer_id SERIAL PRIMARY KEY,
+first_name VARCHAR(100) NOT NULL,
+last_name VARCHAR(100) NOT NULL,
+email VARCHAR(255) UNIQUE NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO customers (first_name, last_name, email) VALUES ('John', 'Doe', 'joedoe@gmail.com');
+INSERT INTO customers (first_name, last_name, email) VALUES ('Mary', 'Smith', 'marysmith@gmail.com');
