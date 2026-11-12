@@ -30,7 +30,7 @@ public class RequestController {
     @GetMapping
     public Map<String, Object> get() {
         log.info("Received GET request on /api/requests");
-        return response("GET", springPipelineService.get(Map.of("GET", "value")));
+        return response("GET", springPipelineService.getAll());
     }
 
     @PostMapping

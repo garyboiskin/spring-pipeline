@@ -17,6 +17,19 @@ spec:
       containers:
         - name: spring-pipeline
           image: 839670623406.dkr.ecr.us-east-2.amazonaws.com/springboot-eks:latest
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgresdb.cp484oko83ef.us-east-2.rds.amazonaws.com:5432/<db-name>
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: SPRING_DATASOURCE_PASSWORD
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
