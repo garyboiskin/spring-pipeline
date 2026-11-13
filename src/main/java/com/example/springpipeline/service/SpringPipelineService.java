@@ -1,6 +1,5 @@
 package com.example.springpipeline.service;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.example.springpipeline.entities.Customer;
@@ -25,6 +24,13 @@ public class SpringPipelineService {
        Iterable<Customer> customers= customerRepository.findAll();
        return Map.of("customers", customers);
       // return body;
+    }
+
+    // create getById
+    public Map<String, Object> getById(Long id) {
+        log.info("Processing GET by ID: {}", id);
+        Customer customer = customerRepository.findById(id).orElse(null);
+        return Map.of("customer", customer);
     }
 
     public Map<String, Object> post(Map<String, Object> body) {
