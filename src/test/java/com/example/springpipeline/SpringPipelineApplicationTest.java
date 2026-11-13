@@ -8,7 +8,8 @@ class SpringPipelineApplicationTest {
     void mainStartsApplication() {
         SpringPipelineApplication.main(new String[] {
                 "--server.port=0",
-                "--spring.main.web-application-type=none"
+                "--spring.main.web-application-type=none",
+                "--spring.profiles.active=test"
         });
     }
 }

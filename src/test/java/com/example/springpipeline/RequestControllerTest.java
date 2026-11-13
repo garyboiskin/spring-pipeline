@@ -1,7 +1,6 @@
 package com.example.springpipeline;
 
 import com.example.springpipeline.controller.RequestController;
-import com.example.springpipeline.entities.Customer;
 import com.example.springpipeline.security.JwtAuthenticationFilter;
 import com.example.springpipeline.service.SpringPipelineService;
 import org.junit.jupiter.api.Test;
@@ -43,11 +42,11 @@ class RequestControllerTest {
 
     @Test
     void getHandlesRequest() throws Exception {
-        Customer customer = new Customer();
-        // Intentionally do not set customerId: this test does not need it, and CI can fail if a setter is unavailable.
-        customer.setFirstName("Alice");
-        customer.setLastName("Smith");
-        customer.setEmail("alice@example.com");
+        Map<String, Object> customer = Map.of(
+                "firstName", "Alice",
+                "lastName", "Smith",
+                "email", "alice@example.com"
+        );
 
         when(springPipelineService.getAll()).thenReturn(Map.of("customers", List.of(customer)));
 
