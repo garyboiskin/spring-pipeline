@@ -1,4 +1,4 @@
-package com.example.springpipeline;
+package com.example.springpipeline.controller;
 
 import java.util.Map;
 

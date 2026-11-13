@@ -6,6 +6,9 @@ class SpringPipelineApplicationTest {
 
     @Test
     void mainStartsApplication() {
-        SpringPipelineApplication.main(new String[] {"--server.port=0", "--spring.main.web-application-type=none"});
+        SpringPipelineApplication.main(new String[] {
+                "--server.port=0",
+                "--spring.main.web-application-type=none"
+        });
     }
 }

@@ -1,4 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-spring-pipeline,com.example.springpipeline.service,SpringPipelineService,8,45,0,0,2,15,1,7,1,7
-spring-pipeline,com.example.springpipeline,RequestController,2,84,1,1,0,17,1,8,0,8
-spring-pipeline,com.example.springpipeline,SpringPipelineApplication,0,8,0,0,0,3,0,2,0,2
