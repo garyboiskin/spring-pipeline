@@ -44,7 +44,7 @@ class RequestControllerTest {
     @Test
     void getHandlesRequest() throws Exception {
         Customer customer = new Customer();
-        customer.setCustomerId(1L);
+        // Intentionally do not set customerId: this test does not need it, and CI can fail if a setter is unavailable.
         customer.setFirstName("Alice");
         customer.setLastName("Smith");
         customer.setEmail("alice@example.com");
