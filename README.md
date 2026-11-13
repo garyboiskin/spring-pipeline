@@ -16,22 +16,22 @@ Run with Docker:
 
 ```sh
 docker build -t spring-pipeline .
-docker run --rm -p 8088:8080 spring-pipeline
+docker run --rm -p 8081:8080 spring-pipeline
 ```
 
 For example
 ```sh
-curl http://localhost:8080/api/requests
-curl -X POST http://localhost:8080/api/requests \
+curl http://localhost:8081/api/requests
+curl -X POST http://localhost:8081/api/requests \
   -H 'Content-Type: application/json' \
   -d '{"name":"sample"}'
-curl -X PUT http://localhost:8080/api/requests \
+curl -X PUT http://localhost:8081/api/requests \
   -H 'Content-Type: application/json' \
   -d '{"name":"updated"}'
-curl -X PATCH http://localhost:8080/api/requests \
+curl -X PATCH http://localhost:8081/api/requests \
   -H 'Content-Type: application/json' \
   -d '{"name":"changed"}'
-curl -X DELETE http://localhost:8080/api/requests
+curl -X DELETE http://localhost:8081/api/requests
 
 mvn test
 ```
@@ -493,3 +493,87 @@ For your case, this is the one that worked from the pod:
 So the DB name is usually:
 •
 postgres
+
+## Test JWT with curl
+
+Use these commands to verify JWT authentication flow end-to-end.
+
+Set your base URL:
+
+```sh
+# Local Maven run (default Spring Boot port)
+export BASE_URL="http://localhost:8080"
+
+# If you run the Docker command from this README, use this instead:
+# export BASE_URL="http://localhost:8081"
+```
+
+1. Verify protected endpoint is blocked without a token:
+
+```sh
+curl -i "$BASE_URL/api/requests"
+```
+
+Expected: `401 Unauthorized`.
+
+2. Request a JWT token:
+
+```sh
+curl -s -X POST "$BASE_URL/api/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"changeit"}'
+```
+
+Expected response shape:
+
+```json
+{"token":"<jwt_here>"}
+```
+{"token":"eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc5NDU1MDUyMCwiZXhwIjoxNzk0NTU0MTIwfQ.4xS7Rg_jps4KhyOA7L2z1uOxpxGNdey_d4MwoJnoK4HhxLwwVFcrq5Ipdpom0nZ6"}%
+
+3. Save token and call protected API:
+
+Short `jq` one-liner (if `jq` is installed):
+
+```sh
+TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/token" -H "Content-Type: application/json" -d '{"username":"admin","password":"changeit"}' | jq -r '.token')
+```
+
+```sh
+TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"changeit"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
+
+curl -i "$BASE_URL/api/requests" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Expected: `200 OK`.
+
+4. Optional negative checks:
+
+```sh
+# Invalid credentials -> 401
+curl -i -X POST "$BASE_URL/api/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"wrong"}'
+
+# Invalid token -> 401
+curl -i "$BASE_URL/api/requests" \
+  -H "Authorization: Bearer not-a-real-token"
+```
+
+#Craete a new secret for JWT
+
+TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/token" -H "Content-Type: application/json" -d '{"username":"admin","password":"changeit"}' | jq -r '.token')
+
+kubectl create secret generic auth-secret \
+--from-literal=SECURITY_JWT_SECRET='eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc5NDU3NzY3OSwiZXhwIjoxNzk0NTgxMjc5fQ.K_z26_6ftJC5bXI0G8-iPzzXWBxOiyrs_KA_Z_vqYZD_DYnP_WY3k_IsMgsw1b1Y' \
+--from-literal=SECURITY_AUTH_USERNAME='admin' \
+--from-literal=SECURITY_AUTH_PASSWORD='changeit'
+
+#apply  k8s/deployment.yaml to update the pod with the new secret.  Restart the pod to pick up the new secret.
+
+kubectl apply -f k8s/deployment.yaml
+kubectl rollout status deployment/spring-pipeline
+

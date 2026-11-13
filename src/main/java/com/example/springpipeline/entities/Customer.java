@@ -12,6 +12,7 @@ import lombok.Data;
 public class Customer {
     @Id
     //SERIAL PRIMARY KEY
+    // ID is database-generated; callers/tests should not rely on setting it manually.
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long customerId;
     @Column(nullable = false)

@@ -30,6 +30,21 @@ spec:
                 secretKeyRef:
                   name: db-secret
                   key: SPRING_DATASOURCE_PASSWORD
+            - name: SECURITY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secret
+                  key: SECURITY_JWT_SECRET
+            - name: SECURITY_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secret
+                  key: SECURITY_AUTH_USERNAME
+            - name: SECURITY_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secret
+                  key: SECURITY_AUTH_PASSWORD
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
